@@ -209,4 +209,5 @@ if __name__ == "__main__":
         inventario = cargar()
         main()
     except KeyboardInterrupt:
+        """ Si el usuario hace Ctrl + C , mostramos un mensaje de salida."""
         print("Saliendo del programa")
