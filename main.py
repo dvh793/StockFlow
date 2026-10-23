@@ -3,19 +3,29 @@ import os
 import sys
 from pathlib import Path
 
-clear = lambda: os.system('cls')
 ruta = Path(__file__).parent / "inventario.json"
 
-# Funcion que espera a interaccion del usuario
+
+def clear():
+    """Limpia la consola."""
+    os.system("cls")
+
+
 def continuar():
+    """Espera a que el usuario pulse Enter."""
     input('Pulsa "Enter" para continuar.')
 
-# Comprobacion de si el articulo existe
-def comprobarArticulo(item):
+
+def comprobar_articulo(item):
+    """Devuelve True si el articulo existe en el inventario."""
     return item in inventario
 
-# Funcion para controlar los movimientos que introduce el usuario
-def inputMovimiento():
+
+def input_movimiento():
+    """Pide una cantidad al usuario.
+
+    Devuelve la cantidad si es un entero mayor que 0, o None si no es valida.
+    """
     try:
         movimiento = int(input("Introduce la cantidad: "))
     except ValueError:
@@ -28,16 +38,27 @@ def inputMovimiento():
         print("Valor no valido, debe ser mayor que 0")
         continuar()
         return None
-#Funcion para controlar las opciones del menu
-def inputMenu():
+
+
+def input_menu():
+    """Pide una opcion de menu.
+
+    Devuelve la opcion como entero, o None si no es un numero.
+    """
     try:
         return int(input("Selecciona una opcion: "))
     except ValueError:
         print("Caracter no valido, introduzca solo numeros")
         continuar()
         return None
-#Funcion para controlar los articulos
-def inputArticulo():
+
+
+def input_articulo():
+    """Pide el nombre de un articulo.
+
+    Devuelve el nombre en mayusculas y sin espacios en los extremos,
+    o None si queda vacio.
+    """
     articulo = input("Introduce el articulo: ")
     articulo = articulo.upper().strip()
     if articulo:
@@ -46,17 +67,18 @@ def inputArticulo():
         print("Articulo no válido")
         continuar()
         return None
-#Actualizar fichero
-def guardar():
-    json_data = json.dumps(inventario,indent=4)
-    with open(ruta, "w", encoding="utf-8") as f:
-        f.write(json_data)
 
-#Primero revisamos si el fichero existe. Si no existe lo creamos.
+
+def guardar():
+    """Guarda el inventario en el fichero JSON."""
+    ruta.write_text(json.dumps(inventario, indent=4), encoding="utf-8")
+
+
+# Primero revisamos si el fichero existe. Si no existe lo creamos.
 if not ruta.exists():
     ruta.write_text("{}", encoding="utf-8")
 
-#Luego revisamos si tiene contenido. Si no, generamos un dict vacio.
+# Luego revisamos si tiene contenido. Si no, generamos un dict vacio.
 fichero = ruta.read_text(encoding="utf-8").strip()
 try:
     inventario = json.loads(fichero) if fichero else {}
@@ -65,8 +87,9 @@ except json.JSONDecodeError as e:
     continuar()
     sys.exit(1)
 
+
 def main():
-    #Menu principal
+    """Muestra el menu principal y gestiona las opciones del usuario."""
     while True:
         clear()
         print("StockFlow")
@@ -76,7 +99,7 @@ def main():
         print("4. Operaciones")
         print("0. Salir")
 
-        menu = inputMenu()
+        menu = input_menu()
         if menu is None:
             continue
 
@@ -89,13 +112,13 @@ def main():
                 print("El inventario esta vacio")
             else:
                 for item, stock in inventario.items():
-                    print (f"{item} : {stock}")
+                    print(f"{item} : {stock}")
             continuar()
         elif menu == 2:
             clear()
-            item = inputArticulo()
+            item = input_articulo()
             if item is not None:
-                if comprobarArticulo(item):
+                if comprobar_articulo(item):
                     print("El articulo ya existe. Introduce otro articulo.")
                     continuar()
                 else:
@@ -105,9 +128,9 @@ def main():
                     continuar()
         elif menu == 3:
             clear()
-            item = inputArticulo()
+            item = input_articulo()
             if item is not None:
-                if not comprobarArticulo(item):
+                if not comprobar_articulo(item):
                     print("El articulo no existe. Introduce otro articulo.")
                 else:
                     if inventario[item] > 0:
@@ -119,10 +142,10 @@ def main():
                 continuar()
         elif menu == 4:
             clear()
-            #Submenu Movimientos
-            item = inputArticulo()
+            # Submenu Movimientos
+            item = input_articulo()
             if item is not None:
-                if comprobarArticulo(item):
+                if comprobar_articulo(item):
                     while True:
                         clear()
                         print("## OPERACIONES ##")
@@ -130,7 +153,7 @@ def main():
                         print("2. Salida")
                         print("0. Volver")
 
-                        submenu = inputMenu()
+                        submenu = input_menu()
                         if submenu is None:
                             continue
 
@@ -140,41 +163,44 @@ def main():
                             continuar()
                             break
                         elif submenu == 1:
-                            movimiento = inputMovimiento()
+                            movimiento = input_movimiento()
                             if movimiento is None:
                                 continue
-                            else:
-                                inventario[item] = inventario[item] + movimiento
-                                print(f"Se han añadido {movimiento} unidades de {item}.")
-                                guardar()
-                                continuar()
+                            inventario[item] += movimiento
+                            print(
+                                f"Se han añadido {movimiento} unidades de {item}."
+                            )
+                            guardar()
+                            continuar()
                         elif submenu == 2:
-                            movimiento = inputMovimiento()
+                            movimiento = input_movimiento()
                             if movimiento is None:
                                 continue
+                            stock = inventario[item]
+                            if movimiento > stock:
+                                print("No quedan tantas unidades")
                             else:
-                                stock = inventario[item]
-                                if movimiento > stock:
-                                    print("No quedan tantas unidades")
-                                else:
-                                    inventario[item] = inventario[item] - movimiento
-                                    print(f"Se han restado {movimiento} unidades de {item}.")
-                                    guardar()
+                                inventario[item] -= movimiento
+                                print(
+                                    f"Se han restado {movimiento} unidades de {item}."
+                                )
+                                guardar()
                             continuar()
                         else:
                             clear()
                             print("Valor no reconocido. Seleccione una opcion válida")
                             continuar()
                 else:
-                    print ("El articulo no existe.")
+                    print("El articulo no existe.")
                     continuar()
         else:
             clear()
             print("Valor no reconocido. Seleccione una opcion válida")
             continuar()
 
-if __name__=="__main__":
+
+if __name__ == "__main__":
     try:
         main()
     except KeyboardInterrupt:
-       print("Saliendo del programa")
+        print("Saliendo del programa")
