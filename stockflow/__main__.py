@@ -3,7 +3,7 @@ import os
 import sys
 from pathlib import Path
 
-ruta = Path(__file__).parent / "inventario.json"
+ruta = Path(__file__).parent.parent / "datos" / "inventario.json"
 inventario = {}
 
 
