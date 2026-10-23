@@ -4,6 +4,7 @@ import sys
 from pathlib import Path
 
 ruta = Path(__file__).parent / "inventario.json"
+inventario = {}
 
 
 def clear():
@@ -69,23 +70,29 @@ def input_articulo():
         return None
 
 
+def cargar():
+    """Carga el inventario desde el fichero JSON y lo devuelve.
+
+    Si el fichero no existe lo crea vacio. Si esta dañado, avisa y
+    cierra el programa sin modificarlo.
+    """
+    # Primero revisamos si el fichero existe. Si no existe lo creamos.
+    if not ruta.exists():
+        ruta.write_text("{}", encoding="utf-8")
+    # Luego revisamos si tiene contenido. Si no, generamos un dict vacio.
+    fichero = ruta.read_text(encoding="utf-8").strip()
+    try:
+        datos = json.loads(fichero) if fichero else {}
+    except json.JSONDecodeError as e:
+        print(f"Error al cargar el fichero {ruta}. Error: {e}")
+        continuar()
+        sys.exit(1)
+    return datos
+
+
 def guardar():
     """Guarda el inventario en el fichero JSON."""
     ruta.write_text(json.dumps(inventario, indent=4), encoding="utf-8")
-
-
-# Primero revisamos si el fichero existe. Si no existe lo creamos.
-if not ruta.exists():
-    ruta.write_text("{}", encoding="utf-8")
-
-# Luego revisamos si tiene contenido. Si no, generamos un dict vacio.
-fichero = ruta.read_text(encoding="utf-8").strip()
-try:
-    inventario = json.loads(fichero) if fichero else {}
-except json.JSONDecodeError as e:
-    print(f"Error al cargar el fichero {ruta}. Error: {e}")
-    continuar()
-    sys.exit(1)
 
 
 def main():
@@ -108,7 +115,7 @@ def main():
             break
         elif menu == 1:
             clear()
-            if len(inventario) == 0:
+            if not inventario:
                 print("El inventario esta vacio")
             else:
                 for item, stock in inventario.items():
@@ -167,9 +174,7 @@ def main():
                             if movimiento is None:
                                 continue
                             inventario[item] += movimiento
-                            print(
-                                f"Se han añadido {movimiento} unidades de {item}."
-                            )
+                            print(f"Se han añadido {movimiento} unidades de {item}.")
                             guardar()
                             continuar()
                         elif submenu == 2:
@@ -201,6 +206,7 @@ def main():
 
 if __name__ == "__main__":
     try:
+        inventario = cargar()
         main()
     except KeyboardInterrupt:
         print("Saliendo del programa")
